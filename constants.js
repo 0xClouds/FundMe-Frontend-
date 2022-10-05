@@ -114,6 +114,19 @@ export const abi = [
     },
     {
         inputs: [],
+        name: "s_priceFeed",
+        outputs: [
+            {
+                internalType: "contract AggregatorV3Interface",
+                name: "",
+                type: "address",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [],
         name: "withdraw",
         outputs: [],
         stateMutability: "nonpayable",

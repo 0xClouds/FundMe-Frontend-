@@ -1,4 +1,4 @@
-import { ethers } from "./ethers-6.5.esm.min.js"
+import { ethers } from "./ethers-5.6.esm.min.js"
 import { abi, contractAddress } from "./constants.js"
 
 const connectButton = document.getElementById("connectButton")
@@ -10,42 +10,57 @@ fundButton.onclick = fund
 balanceButton.onclick = getBalance
 withdrawButton.onclick = withdraw
 
+console.log(ethers)
+
 async function connect() {
     if (typeof window.ethereum !== "undefined") {
-        console.log("I see a metamask")
-        await window.ethereum.request({ method: "eth_requestAccounts" })
-        connectButton.innerHTML = "Connected"
+        try {
+            await window.ethereum.request({ method: "eth_requestAccounts" })
+            connectButton.innerHTML = "Connected!"
+        } catch (error) {
+            console.log(error)
+        }
+        connectButton.innerHTML = "Connected!"
+        const accounts = await ethereum.request({ method: "eth_accounts" })
+        console.log(accounts)
     } else {
-        connectButton.innerHTML = "Please install metamask"
+        document.getElementById("connectButton").innerHTML =
+            "Please Install Metamask"
     }
 }
 
 async function getBalance() {
+    //first check if there is an active window into Ethereum
     if (typeof window.ethereum !== "undefined") {
+        //Then we need to see who is providing that connection, in this case its Metamask
         const provider = new ethers.providers.Web3Provider(window.ethereum)
+        // call the balance function
         const balance = await provider.getBalance(contractAddress)
+
         console.log(ethers.utils.formatEther(balance))
     }
 }
 
-//fund
-async function fund() {
-    const ethAmount = document.getElementById("ethAmount").value
-    console.log(`Funding with ${ethAmount}...`)
+// fund function
 
+async function fund(ethAmount) {
+    ethAmount = document.getElementById("ethAmount").value
+    console.log(`Funding with ${ethAmount}...`)
     if (typeof window.ethereum !== "undefined") {
-        //provider
+        //what do we need to send transaction?
+        //provider //connection to the blockchain
         const provider = new ethers.providers.Web3Provider(window.ethereum)
-        //signer
+        //signer / wallet/ someone with some gas
         const signer = provider.getSigner()
-        //contract abi & address
+        console.log(signer)
+        // contract abi and signer
         const contract = new ethers.Contract(contractAddress, abi, signer)
         try {
             const transactionResponse = await contract.fund({
                 value: ethers.utils.parseEther(ethAmount),
             })
             await listenForTransactionMine(transactionResponse, provider)
-            console.log("Done!")
+            console.log("done")
         } catch (error) {
             console.log(error)
         }
@@ -53,33 +68,33 @@ async function fund() {
 }
 
 function listenForTransactionMine(transactionResponse, provider) {
-    console.log(`Mining ${transactionResponse.hash}`)
-    //create listener
-    //listen for this transaction to finish
+    console.log(`Mining ${transactionResponse.hash}...`)
     return new Promise((resolve, reject) => {
         provider.once(transactionResponse.hash, (transactionReceipt) => {
             console.log(
-                `Completed with ${transactionReceipt.confirmations} confirmations`
+                `Complete with ${transactionReceipt.confirmations} confirmations`
             )
             resolve()
         })
     })
 }
-//withdraw
 
+// withdraw
 async function withdraw() {
     if (typeof window.ethereum !== "undefined") {
-        //provider
+        console.log("Withdrawing...")
         const provider = new ethers.providers.Web3Provider(window.ethereum)
-        // signer
         const signer = provider.getSigner()
         const contract = new ethers.Contract(contractAddress, abi, signer)
-
         try {
-            console.log(`Withdrawing funds....`)
+            console.log(signer)
             const transactionResponse = await contract.withdraw()
             await listenForTransactionMine(transactionResponse, provider)
-            console.log("funds withdrawn")
+            console.log(
+                `Withdrawing: ${ethers.utils.formatEther(
+                    transactionResponse.value
+                )} to ${signer}`
+            )
         } catch (error) {
             console.log(error)
         }
